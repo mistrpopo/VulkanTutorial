@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanTutorial", "VulkanTutorial\VulkanTutorial.vcxproj", "{44097A0A-B470-45C0-963B-B471042D2C17}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanTest", "VulkanTutorial\VulkanTutorial.vcxproj", "{44097A0A-B470-45C0-963B-B471042D2C17}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HelloTriangle", "HelloTriangle\HelloTriangle.vcxproj", "{B7138769-C7D8-40E1-9B39-A84C0385762E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,14 @@ Global
 		{44097A0A-B470-45C0-963B-B471042D2C17}.Release|x64.Build.0 = Release|x64
 		{44097A0A-B470-45C0-963B-B471042D2C17}.Release|x86.ActiveCfg = Release|Win32
 		{44097A0A-B470-45C0-963B-B471042D2C17}.Release|x86.Build.0 = Release|Win32
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Debug|x64.ActiveCfg = Debug|x64
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Debug|x64.Build.0 = Debug|x64
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Debug|x86.ActiveCfg = Debug|Win32
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Debug|x86.Build.0 = Debug|Win32
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x64.ActiveCfg = Release|x64
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x64.Build.0 = Release|x64
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x86.ActiveCfg = Release|Win32
+		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
