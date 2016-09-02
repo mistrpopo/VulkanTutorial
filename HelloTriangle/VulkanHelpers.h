@@ -2,6 +2,9 @@
 #include <vulkan/vulkan.h>
 #include <functional>
 #include <sstream>
+#include <vector>
+#include <algorithm>
+#include <set>
 
 //VDeleter : wrapper class to make sure we always cleanup VkObject-s
 
@@ -34,7 +37,7 @@ public:
 		return &object;
 	}
 
-	operator T() {
+	operator T() const /*well done Vulkan*/{
 		return object;
 	}
 
@@ -80,3 +83,46 @@ std::string FormatDebugMessage(VkDebugReportFlagsEXT flags, const char* msg) {
 
 	return s.str();
 }
+
+
+enum QueueFamilyProperty {
+	GraphicsFamily,
+	PresentFamily,
+	NumberOfProperties
+};
+
+struct QueueFamilyIndices {
+	QueueFamilyIndices() {}
+	QueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface) {
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		for (const auto& queueFamily : queueFamilies) {
+			int i = int(&queueFamily - &*queueFamilies.begin());
+
+			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				index[GraphicsFamily] = i;
+			}
+			VkBool32 presentSupport = false;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+			if (queueFamily.queueCount > 0 && presentSupport) {
+				index[PresentFamily] = i;
+			}
+
+			if (isComplete()) {
+				break;
+			}
+		}
+	}
+
+	int operator[](int i) { return index[i]; }
+	std::set<int> uniqueQueueFamilies() { return std::set<int>(index.begin(), index.end()); }
+	bool isComplete() {
+		return std::all_of(index.begin(), index.end(), [](int i) { return i != -1; });
+	}
+
+	std::vector<int> index = std::vector<int>(NumberOfProperties, -1);
+};

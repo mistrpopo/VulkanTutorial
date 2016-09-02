@@ -3,7 +3,6 @@
 
 #include "VulkanHelpers.h"
 
-#include <vector>
 #include <iostream>
 #include <stdexcept>
 #include <functional>
@@ -42,6 +41,9 @@ private:
 	void initVulkan() {
 		createInstance();
 		setupDebugCallback();
+		createSurface();
+		pickUpPhysicalDevice();
+		createLogicalDevice();
 	}
 
 	bool checkValidationLayerSupport() {
@@ -68,6 +70,7 @@ private:
 
 	void setRequiredExtensions() {
 		if (requiredExtensions.empty()) {
+			//required glfw extensions
 			unsigned int glfwExtensionCount = 0;
 			const char** glfwExtensions;
 			glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -76,6 +79,7 @@ private:
 				requiredExtensions.insert(requiredExtensions.end(), glfwExtensions, glfwExtensions + glfwExtensionCount);
 			}
 
+			//required debug report extension
 			if (enableValidationLayers) {
 				requiredExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 			}
@@ -91,6 +95,18 @@ private:
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
 
+		//good old std algorithms and lambda functions convey our intention so much better :) just kidding
+		return std::all_of(
+			requiredExtensions.begin(), requiredExtensions.end(),
+			[&availableExtensions](const char* requiredExtension) { 
+			return std::find_if(
+				availableExtensions.begin(), availableExtensions.end(), 
+				[&requiredExtension](VkExtensionProperties& extensionProperties){
+				return strcmp(requiredExtension, extensionProperties.extensionName) == 0;
+			}) != availableExtensions.end();
+		});
+			
+		/*
 		for (const char* glfwExtension : requiredExtensions) {
 			bool extensionFound = false;
 			for (const auto& extensionProperties : availableExtensions) {
@@ -103,7 +119,7 @@ private:
 				return false;
 			}
 		}
-		return true;
+		return true;*/
 	}
 
 	void createInstance() {
@@ -151,9 +167,7 @@ private:
 		const char* layerPrefix,
 		const char* msg,
 		void* userData) {
-
 		std::cerr << FormatDebugMessage(flags,msg) << std::endl;
-
 		return VK_FALSE;
 	}
 
@@ -169,7 +183,93 @@ private:
 		}
 	}
 
+	void createSurface() {
+		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create window surface!");
+		}
+	}
 
+	bool isDeviceSuitable(VkPhysicalDevice device) {
+
+		//check the device properties and features
+		VkPhysicalDeviceProperties deviceProperties;
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		VkPhysicalDeviceFeatures deviceFeatures;
+		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+		bool isDevicePropertiesSuitable = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+			deviceFeatures.geometryShader;
+
+		//check the queue families for required operations support
+		QueueFamilyIndices indices(device,surface);
+
+		return isDevicePropertiesSuitable && indices.isComplete();
+	}
+
+	void pickUpPhysicalDevice() {
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+		
+		if (deviceCount == 0) {
+			throw std::runtime_error("failed to find GPUs with Vulkan support!");
+		}
+
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+		for (const auto& device : devices) {
+			if (isDeviceSuitable(device)) {
+				physicalDevice = device;
+				break;
+			}
+		}
+
+		if (physicalDevice == VK_NULL_HANDLE) {
+			throw std::runtime_error("failed to find a suitable GPU!");
+		}
+	}
+
+	void createLogicalDevice() {
+
+		QueueFamilyIndices indices(physicalDevice,surface);
+		std::set<int> uniqueQueueFamilies = indices.uniqueQueueFamilies();
+		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		for (auto& queueFamily : uniqueQueueFamilies) {
+			VkDeviceQueueCreateInfo queueCreateInfo = {};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = queueFamily;
+			queueCreateInfo.queueCount = 1;
+			float queuePriority = 1.0f;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
+
+		VkPhysicalDeviceFeatures deviceFeatures = {};
+
+		VkDeviceCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+		createInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+		createInfo.pEnabledFeatures = &deviceFeatures;
+
+		createInfo.enabledExtensionCount = 0;
+
+		if (enableValidationLayers) {
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+		else {
+			createInfo.enabledLayerCount = 0;
+		}
+
+		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create logical device!");
+		}
+
+		vkGetDeviceQueue(device, indices[GraphicsFamily], 0, &graphicsQueue);
+	}
 
 	void mainLoop() {
 		//run until window should close (error occurs/window was closed by user)
@@ -182,8 +282,14 @@ private:
 	GLFWwindow* window;
 	VDeleter<VkInstance> instance{ vkDestroyInstance };
 	VDeleter<VkDebugReportCallbackEXT> callback{ instance, DestroyDebugReportCallbackEXT };
+	VDeleter<VkSurfaceKHR> surface{ instance, vkDestroySurfaceKHR };
+	//Make sure to place the declaration below the VkInstance member, because it needs to be cleaned up before the instance is cleaned up
+	VDeleter<VkDevice> device{ vkDestroyDevice };
 	std::vector<const char*> requiredExtensions;
 
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; //This object will be implicitly destroyed when the VkInstance is destroyed
+	VkQueue graphicsQueue; //Device queues are implicitly cleaned up when the device is destroyed
+	VkQueue presentQueue;
 };
 
 
