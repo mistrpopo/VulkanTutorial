@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <fstream>
 
 //VDeleter : wrapper class to make sure we always cleanup VkObject-s
 
@@ -124,5 +125,26 @@ struct QueueFamilyIndices {
 		return std::all_of(index.begin(), index.end(), [](int i) { return i != -1; });
 	}
 
-	std::vector<int> index = std::vector<int>(NumberOfProperties, -1);
+	std::vector<uint32_t> index = std::vector<uint32_t>(NumberOfProperties, -1);
 };
+
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+
+static std::vector<char> loadFile(const std::string& filename) {
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+	if (!file.is_open()) {
+		throw std::runtime_error("failed to open file!");
+	}
+
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+	file.close();
+
+	return buffer;
+}

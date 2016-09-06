@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanTest", "VulkanTutorial\VulkanTutorial.vcxproj", "{44097A0A-B470-45C0-963B-B471042D2C17}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HelloTriangle", "HelloTriangle\HelloTriangle.vcxproj", "{B7138769-C7D8-40E1-9B39-A84C0385762E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShadersCompiler", "HelloTriangle\Shaders\ShadersCompiler\ShadersCompiler.vcxproj", "{CD75EA91-6436-438E-B339-53E3B58641FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,14 @@ Global
 		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x64.Build.0 = Release|x64
 		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x86.ActiveCfg = Release|Win32
 		{B7138769-C7D8-40E1-9B39-A84C0385762E}.Release|x86.Build.0 = Release|Win32
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Debug|x64.ActiveCfg = Debug|x64
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Debug|x64.Build.0 = Debug|x64
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Debug|x86.ActiveCfg = Debug|Win32
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Debug|x86.Build.0 = Debug|Win32
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Release|x64.ActiveCfg = Release|x64
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Release|x64.Build.0 = Release|x64
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Release|x86.ActiveCfg = Release|Win32
+		{CD75EA91-6436-438E-B339-53E3B58641FD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

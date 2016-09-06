@@ -160,6 +160,10 @@
   <ItemGroup>
     <ClInclude Include="VulkanHelpers.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\shader.frag" />
+    <None Include="Shaders\shader.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

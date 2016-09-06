@@ -243,3 +243,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/HelloTriangle/Shaders/ShadersCompiler/ShadersCompiler.vcxproj.filters
+/HelloTriangle/Shaders/ShadersCompiler/ShadersCompiler.vcxproj
+/HelloTriangle/Shaders/vert.spv
+/HelloTriangle/Shaders/frag.spv
