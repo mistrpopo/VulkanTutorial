@@ -115,6 +115,8 @@ struct QueueFamilyIndices {
 				index[PresentFamily] = i;
 			}
 
+			//to do add another queue family used specifically for memory transfers. 
+			//Until then, Vulkan will use the family with VK_QUEUE_GRAPHICS_BIT as it implicitly supports transfers
 			if (isComplete()) {
 				break;
 			}
