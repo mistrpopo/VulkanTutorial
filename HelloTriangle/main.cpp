@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <functional>
+#include <chrono>
 
 
 const int WINDOW_WIDTH = 1000;
@@ -29,12 +30,12 @@ const VkDebugReportFlagsEXT debugFlags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBU
 //vertices of the mesh
 const std::vector<Vertex> vertices = {
 	{ {  0.0f, -0.1f },{ 1.0f, 1.0f, 1.0f } },
-	{ {  0.0f,  0.6f },{ 1.0f, 0.0f, 0.0f } },
-	{ { -0.8f, -0.2f },{ 1.0f, 0.0f, 0.0f } },
+	{ {  0.0f,  0.6f },{ 1.0f, 0.0f, 0.3f } },
+	{ { -0.8f, -0.2f },{ 1.0f, 0.0f, 0.2f } },
 	{ { -0.4f, -0.6f },{ 1.0f, 0.0f, 0.0f } },
-	{ {  0.0f, -0.4f },{ 1.0f, 0.0f, 0.0f } },
+	{ {  0.0f, -0.4f },{ 1.0f, 0.0f, 0.1f } },
 	{ {  0.4f, -0.6f },{ 1.0f, 0.0f, 0.0f } },
-	{ {  0.8f, -0.2f },{ 1.0f, 0.0f, 0.0f } }
+	{ {  0.8f, -0.2f },{ 1.0f, 0.0f, 0.2f } }
 };
 
 //indices to take advantage of redudancy between vertices in adjacent triangles
@@ -68,11 +69,13 @@ private:
 		createSwapChain();
 		createImageViews();
 		createRenderPass();
+		createDescriptorSetLayout();
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
 		createVertexBuffer();
 		createIndexBuffer();
+		createUniformBuffer();
 		createCommandBuffers();
 		createSemaphores();
 	}
@@ -546,6 +549,24 @@ private:
 		}
 	}
 
+	void createDescriptorSetLayout() {
+		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1;
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &uboLayoutBinding;
+
+		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+	}
+
 	void createGraphicsPipeline() {
 		auto vertShaderCode = loadFile("shaders/vert.spv");
 		auto fragShaderCode = loadFile("shaders/frag.spv");
@@ -659,12 +680,11 @@ private:
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = dynamicStates;
 
+		VkDescriptorSetLayout setLayouts[] = { descriptorSetLayout };
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0; // Optional
-		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-		pipelineLayoutInfo.pPushConstantRanges = 0; // Optional
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
 			&pipelineLayout) != VK_SUCCESS) {
@@ -846,6 +866,13 @@ private:
 		copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 	}
 
+	void createUniformBuffer() {
+		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformStagingBuffer, uniformStagingBufferMemory);
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
+	}
+
 	void createCommandBuffers() {
 		commandBuffers.resize(swapChainFramebuffers.size());
 
@@ -911,11 +938,32 @@ private:
 		//run until window should close (error occurs/window was closed by user)
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
+
+			updateUniformBuffer();
 			drawFrame();
 		}
 		
 		//wait until device finishes operations in order to cleanly dispose of resources
 		vkDeviceWaitIdle(device);
+	}
+
+	void updateUniformBuffer() {
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+		UniformBufferObject ubo = {};
+		ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+		ubo.proj[1][1] *= -1;
+
+		void* data;
+		vkMapMemory(device, uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
+		memcpy(data, &ubo, sizeof(ubo));
+		vkUnmapMemory(device, uniformStagingBufferMemory);
+		std::cerr << sizeof(ubo);
+		copyBuffer(uniformStagingBuffer, uniformBuffer, sizeof(ubo));
 	}
 
 	void drawFrame() {
@@ -967,14 +1015,21 @@ private:
 	VDeleter<VkSwapchainKHR> swapChain{ device, vkDestroySwapchainKHR }; //swap chain must be deleted before the device
 	std::vector<VDeleter<VkImageView>> swapChainImageViews; //unlike the VkImage, the VkImageView s are created and deleted by us
 	VDeleter<VkRenderPass> renderPass{ device, vkDestroyRenderPass };
+	VDeleter<VkDescriptorSetLayout> descriptorSetLayout{ device, vkDestroyDescriptorSetLayout }; 
 	VDeleter<VkPipelineLayout> pipelineLayout{ device, vkDestroyPipelineLayout };
 	VDeleter<VkPipeline> graphicsPipeline{ device, vkDestroyPipeline };
 	std::vector<VDeleter<VkFramebuffer>> swapChainFramebuffers;
 	VDeleter<VkCommandPool> commandPool{ device, vkDestroyCommandPool };
+
 	VDeleter<VkBuffer> vertexBuffer{ device, vkDestroyBuffer };
 	VDeleter<VkDeviceMemory> vertexBufferMemory{ device, vkFreeMemory };
 	VDeleter<VkBuffer> indexBuffer{ device, vkDestroyBuffer };
 	VDeleter<VkDeviceMemory> indexBufferMemory{ device, vkFreeMemory };
+
+	VDeleter<VkBuffer> uniformStagingBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> uniformStagingBufferMemory{ device, vkFreeMemory };
+	VDeleter<VkBuffer> uniformBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> uniformBufferMemory{ device, vkFreeMemory };
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; //This object will be implicitly destroyed when the VkInstance is destroyed
 	VkQueue graphicsQueue; //Device queues are implicitly cleaned up when the device is destroyed

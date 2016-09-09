@@ -6,9 +6,10 @@
 #include <algorithm>
 #include <set>
 #include <fstream>
-#include <glm/glm.hpp> //linear algebra related types like vectors and matrices
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>//linear algebra related types like vectors and matrices
+#include <glm/gtc/matrix_transform.hpp>
 #include <array>
-
 //VDeleter : wrapper class to make sure we always cleanup VkObject-s
 
 template <typename T>
@@ -191,4 +192,10 @@ struct Vertex {
 
 		return attributeDescriptions;
 	}
+};
+
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
 };
