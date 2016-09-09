@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <set>
 #include <fstream>
+#include <glm/glm.hpp> //linear algebra related types like vectors and matrices
+#include <array>
 
 //VDeleter : wrapper class to make sure we always cleanup VkObject-s
 
@@ -38,7 +40,7 @@ public:
 		return &object;
 	}
 
-	operator T() const /*well done Vulkan*/{
+	operator T() const {
 		return object;
 	}
 
@@ -148,3 +150,43 @@ static std::vector<char> loadFile(const std::string& filename) {
 
 	return buffer;
 }
+
+template<class T>
+void setData(uint32_t &count, T *&data, const std::vector<T> &vec) //todo
+{
+	count = static_cast<uint32_t>(vec.size());
+	data = vec.data();
+}
+
+struct Vertex {
+	glm::vec2 pos;
+	glm::vec3 color;
+
+
+	static VkVertexInputBindingDescription getBindingDescription() {
+		VkVertexInputBindingDescription bindingDescription = {};
+
+		//describe the memory structure of the buffer to Vulkan
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		return bindingDescription;
+	}
+
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+		attributeDescriptions[1].binding = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+		return attributeDescriptions;
+	}
+};
