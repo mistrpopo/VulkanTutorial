@@ -247,3 +247,5 @@ ModelManifest.xml
 /HelloTriangle/Shaders/ShadersCompiler/ShadersCompiler.vcxproj
 /HelloTriangle/Shaders/vert.spv
 /HelloTriangle/Shaders/frag.spv
+/HelloTriangle/Shaders/ShadersCompiler/vert.spv
+/HelloTriangle/Shaders/ShadersCompiler/frag.spv

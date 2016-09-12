@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanTest", "VulkanTutorial\VulkanTutorial.vcxproj", "{44097A0A-B470-45C0-963B-B471042D2C17}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HelloTriangle", "HelloTriangle\HelloTriangle.vcxproj", "{B7138769-C7D8-40E1-9B39-A84C0385762E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CD75EA91-6436-438E-B339-53E3B58641FD} = {CD75EA91-6436-438E-B339-53E3B58641FD}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShadersCompiler", "HelloTriangle\Shaders\ShadersCompiler\ShadersCompiler.vcxproj", "{CD75EA91-6436-438E-B339-53E3B58641FD}"
 EndProject
