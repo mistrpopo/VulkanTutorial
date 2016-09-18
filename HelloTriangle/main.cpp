@@ -11,9 +11,14 @@
 #include <chrono>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h> //single-file image reading library
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 1000;
+
+const std::string MODEL_PATH = "models/chalet.obj";
+const std::string TEXTURE_PATH = "textures/bebe2.jpg";
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
@@ -38,15 +43,21 @@ const bool fixYAxis = true;
 const VkDebugReportFlagsEXT debugFlags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 
 //vertices of the mesh
-/*const std::vector<Vertex> vertices = {
+#define HEART
+#ifdef HEART
+const std::vector<Vertex> vertices = {
 	{ {  0.0f, -0.1f,  0.0f } , {  1.0f,  1.0f,  1.0f } , {  0.5f,  0.5f } },
-	{ {  0.0f,  0.6f,  0.0f } , {  1.0f,  0.0f,  0.3f } , {  1.0f,  1.0f } },
-	{ { -0.8f, -0.2f,  0.0f } , {  1.0f,  0.0f,  0.2f } , {  1.0f,  0.0f } },
-	{ { -0.4f, -0.6f,  0.0f } , {  1.0f,  0.0f,  0.0f } , {  0.7f,  0.3f } },
-	{ {  0.0f, -0.4f,  0.0f } , {  1.0f,  0.0f,  0.1f } , {  0.3f,  0.4f } },
-	{ {  0.4f, -0.6f,  0.0f } , {  1.0f,  0.0f,  0.0f } , {  0.2f,  0.8f } },
-	{ {  0.8f, -0.2f,  0.0f } , {  1.0f,  0.0f,  0.2f } , {  0.0f,  1.0f } }
-};*/
+	{ {  0.0f,  0.6f,  0.0f } , {  1.0f,  0.0f,  0.3f } , {  0.5f,  1.0f } },
+	{ { -0.8f, -0.2f,  0.0f } , {  1.0f,  0.0f,  0.2f } , {  0.0f,  0.4f } },
+	{ { -0.4f, -0.6f,  0.0f } , {  1.0f,  0.0f,  0.0f } , {  0.2f,  0.0f } },
+	{ {  0.0f, -0.4f,  0.0f } , {  1.0f,  0.0f,  0.1f } , {  0.5f,  0.2f } },
+	{ {  0.4f, -0.6f,  0.0f } , {  1.0f,  0.0f,  0.0f } , {  0.8f,  0.0f } },
+	{ {  0.8f, -0.2f,  0.0f } , {  1.0f,  0.0f,  0.2f } , {  1.0f,  0.4f } }
+};
+const std::vector<uint16_t> indices = {
+0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 1
+};
+#else
 const std::vector<Vertex> vertices = {
 	{ { -0.5f, -0.5f, 0.0f },{ 1.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
 	{ { 0.5f, -0.5f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 0.0f } },
@@ -64,6 +75,7 @@ const std::vector<uint16_t> indices = {
 	0, 1, 2, 2, 3, 0,
 	4, 5, 6, 6, 7, 4
 };
+#endif
 
 class HelloTriangleApplication {
 public:
@@ -1058,7 +1070,7 @@ private:
 	void createTextureImage() {
 		int texWidth, texHeight, texChannels;
 		//texture needs to be square. todo: understand why.
-		stbi_uc* pixels = stbi_load("textures/bebe2.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 		if (!pixels) {
