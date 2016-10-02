@@ -18,7 +18,7 @@ const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 1000;
 
 const std::string MODEL_PATH = "models/chalet.obj";
-const std::string TEXTURE_PATH = "textures/bebe2.jpg";
+#define TEXTURE_PATH "textures/chalet.jpg"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
@@ -43,8 +43,10 @@ const bool fixYAxis = true;
 const VkDebugReportFlagsEXT debugFlags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 
 //vertices of the mesh
-#define HEART
+//#define HEART
 #ifdef HEART
+#undef TEXTURE_PATH 
+#define TEXTURE_PATH "textures/bebe2.jpg"
 const std::vector<Vertex> vertices = {
 	{ {  0.0f, -0.1f,  0.0f } , {  1.0f,  1.0f,  1.0f } , {  0.5f,  0.5f } },
 	{ {  0.0f,  0.6f,  0.0f } , {  1.0f,  0.0f,  0.3f } , {  0.5f,  1.0f } },
@@ -115,6 +117,7 @@ private:
 		createTextureImage();
 		createTextureImageView();
 		createTextureSampler();
+		loadModel(); 
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffer();
@@ -1070,7 +1073,7 @@ private:
 	void createTextureImage() {
 		int texWidth, texHeight, texChannels;
 		//texture needs to be square. todo: understand why.
-		stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(TEXTURE_PATH, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 		if (!pixels) {
@@ -1129,6 +1132,37 @@ private:
 		//n.b. the sampler is a generic object and is not linked to a specific texture.
 		if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");
+		}
+	}
+	
+	void loadModel() {
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		std::string err;
+
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, MODEL_PATH.c_str(), nullptr, true /*automatically triangulate*/)) {
+			throw std::runtime_error(err);
+		}
+
+		for (const auto& shape : shapes) {
+			for (const auto& index : shape.mesh.indices) {
+				Vertex vertex = {};
+
+				vertex.pos = {
+					attrib.vertices[3 * index.vertex_index + 0],
+					attrib.vertices[3 * index.vertex_index + 1],
+					attrib.vertices[3 * index.vertex_index + 2]
+				};
+
+				vertex.texCoord = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					1.0f - attrib.texcoords[2 * index.texcoord_index + 1] //flipping the vertical component of the texture coordinates
+				};
+
+				vertices.push_back(vertex);
+				indices.push_back(indices.size());
+			}
 		}
 	}
 
@@ -1288,7 +1322,7 @@ private:
 			VkBuffer vertexBuffers[] = { vertexBuffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 			//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0); 
@@ -1331,7 +1365,7 @@ private:
 		float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 		UniformBufferObject ubo = {};
 		ubo.model = glm::rotate(glm::mat4(), time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = glm::lookAt(glm::vec3(3.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
 		if(fixYAxis) ubo.proj[1][1] *= -1;
 		
@@ -1424,6 +1458,8 @@ private:
 	VDeleter<VkImageView> textureImageView{ device, vkDestroyImageView }; 
 	VDeleter<VkSampler> textureSampler{ device, vkDestroySampler };
 	
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
 	VDeleter<VkBuffer> vertexBuffer{ device, vkDestroyBuffer };
 	VDeleter<VkDeviceMemory> vertexBufferMemory{ device, vkFreeMemory };
 	VDeleter<VkBuffer> indexBuffer{ device, vkDestroyBuffer };

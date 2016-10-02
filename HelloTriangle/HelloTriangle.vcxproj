@@ -143,7 +143,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\Documents\Visual Studio 2015\Libraries\glfw-3.2.bin.WIN64\include;D:\Documents\Visual Studio 2015\Libraries\glm;C:\VulkanSDK\1.0.17.0\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Documents\Visual Studio 2015\Libraries\glfw-3.2.bin.WIN64\include;D:\Documents\Visual Studio 2015\Libraries\glm;C:\VulkanSDK\1.0.17.0\Include;D:\Documents\Visual Studio 2015\Libraries\stb;D:\Documents\Visual Studio 2015\Libraries\tinyobj</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
